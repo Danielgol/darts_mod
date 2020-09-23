@@ -17,7 +17,7 @@ from torch.autograd import Variable
 from model_search import Network
 from architect import Architect
 
-
+#ARGUMENTOS PASSADOS
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size')
@@ -58,9 +58,12 @@ CIFAR_CLASSES = 10
 
 
 def main():
+
+  # VERIFICA SE ESTÁ USANDO A GPU
   if not torch.cuda.is_available():
     logging.info('no gpu device available')
     sys.exit(1)
+    
 
   np.random.seed(args.seed)
   torch.cuda.set_device(args.gpu)
@@ -73,8 +76,11 @@ def main():
 
   criterion = nn.CrossEntropyLoss()
   criterion = criterion.cuda()
+
+  # CRIA O MODELO (Model Search)
   model = Network(args.init_channels, CIFAR_CLASSES, args.layers, criterion)
   model = model.cuda()
+
   logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
 
   optimizer = torch.optim.SGD(
@@ -106,6 +112,7 @@ def main():
   architect = Architect(model, args)
 
   for epoch in range(args.epochs):
+    
     scheduler.step()
     lr = scheduler.get_lr()[0]
     logging.info('epoch %d lr %e', epoch, lr)
