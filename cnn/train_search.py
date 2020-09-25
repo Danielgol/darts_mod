@@ -17,7 +17,7 @@ from torch.autograd import Variable
 from model_search import Network
 from architect import Architect
 
-#ARGUMENTOS PASSADOS
+# Argumentos passados
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size')
@@ -59,12 +59,11 @@ CIFAR_CLASSES = 10
 
 def main():
 
-  # VERIFICA SE ESTÁ USANDO A GPU
+  # Verifica o uso da GPU
   if not torch.cuda.is_available():
     logging.info('no gpu device available')
     sys.exit(1)
     
-
   np.random.seed(args.seed)
   torch.cuda.set_device(args.gpu)
   cudnn.benchmark = True
@@ -77,7 +76,7 @@ def main():
   criterion = nn.CrossEntropyLoss()
   criterion = criterion.cuda()
 
-  # CRIA O MODELO (Model Search)
+  # MODELO (Model Search)
   model = Network(args.init_channels, CIFAR_CLASSES, args.layers, criterion)
   model = model.cuda()
 
@@ -89,30 +88,36 @@ def main():
       momentum=args.momentum,
       weight_decay=args.weight_decay)
 
-  train_transform, valid_transform = utils._data_transforms_cifar10(args)
-  train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)
+  # DATASET
+  train_transform, valid_transform = utils._data_transforms_cifar10(args) # Transformador de dataset em dados Tensor
+  train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform) # Baixa o Cifar e o transforma em dados Tensor
 
   num_train = len(train_data)
   indices = list(range(num_train))
   split = int(np.floor(args.train_portion * num_train))
 
+  # TRAIN DATASET
   train_queue = torch.utils.data.DataLoader(
       train_data, batch_size=args.batch_size,
       sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
       pin_memory=True, num_workers=2)
 
+  # ???
   valid_queue = torch.utils.data.DataLoader(
       train_data, batch_size=args.batch_size,
       sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:num_train]),
       pin_memory=True, num_workers=2)
 
+  # ???
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, float(args.epochs), eta_min=args.learning_rate_min)
 
   architect = Architect(model, args)
 
+  # ÉPOCAS
   for epoch in range(args.epochs):
     
+    # ???
     scheduler.step()
     lr = scheduler.get_lr()[0]
     logging.info('epoch %d lr %e', epoch, lr)

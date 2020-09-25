@@ -75,6 +75,7 @@ def main():
 
 
 def infer(test_queue, model, criterion):
+  
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()

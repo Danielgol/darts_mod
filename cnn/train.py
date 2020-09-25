@@ -16,7 +16,6 @@ import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 from model import NetworkCIFAR as Network
 
-
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data', help='location of the data corpus')
 parser.add_argument('--batch_size', type=int, default=96, help='batch size')
@@ -54,6 +53,7 @@ CIFAR_CLASSES = 10
 
 
 def main():
+
   if not torch.cuda.is_available():
     logging.info('no gpu device available')
     sys.exit(1)
@@ -75,12 +75,12 @@ def main():
 
   criterion = nn.CrossEntropyLoss()
   criterion = criterion.cuda()
+
   optimizer = torch.optim.SGD(
       model.parameters(),
       args.learning_rate,
       momentum=args.momentum,
-      weight_decay=args.weight_decay
-      )
+      weight_decay=args.weight_decay)
 
   train_transform, valid_transform = utils._data_transforms_cifar10(args)
   train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)
@@ -95,6 +95,7 @@ def main():
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs))
 
   for epoch in range(args.epochs):
+    
     scheduler.step()
     logging.info('epoch %d lr %e', epoch, scheduler.get_lr()[0])
     model.drop_path_prob = args.drop_path_prob * epoch / args.epochs
