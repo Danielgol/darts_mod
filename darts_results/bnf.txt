@@ -1,0 +1,29 @@
+<genotype> ::= (<e> <op> <e>) | <f1>(<e>) | <f2>(<e>, <e>) | <v> | <layer>
+<op> ::= + | * | -
+<f1> ::= psqrt | plog
+<f2> ::= pdiv
+<v> ::= x[<idx>]
+<idx> ::= 0 | 1 | 2 | 3
+<layer> ::= (max_pool_3x3) | (max_pool_2x2) | (avr_pool_3x3) | (max_pool_3x3) | ...
+
+
+<genotype> ::= <normal> <normal_concat> <reduce> <reduce_concat>
+normal::= <layer> <v> <normal> | <layer>
+<layer> ::= (max_pool_3x3) 
+	| (avg_pool_3x3)
+	| (skip_connect)
+	| (sep_conv_3x3)
+	| (sep_conv_5x5)
+	| (dil_conv_3x3)
+	| (dil_conv_5x5)
+
+reduce::= <layer> <v> <reduce> | <layer>
+<layer> ::= (max_pool_3x3) 
+	| (avg_pool_3x3)
+	| (skip_connect)
+	| (sep_conv_3x3)
+	| (sep_conv_5x5)
+	| (dil_conv_3x3)
+	| (dil_conv_5x5)
+
+<v> ::= 0 | 1 | 2 | 3 | 4

@@ -125,16 +125,19 @@ class NetworkCIFAR(nn.Module):
     C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
     self.cells = nn.ModuleList()
     reduction_prev = False
+    
     for i in range(layers):
       if i in [layers//3, 2*layers//3]:
         C_curr *= 2
         reduction = True
       else:
         reduction = False
+
       cell = Cell(genotype, C_prev_prev, C_prev, C_curr, reduction, reduction_prev)
       reduction_prev = reduction
       self.cells += [cell]
       C_prev_prev, C_prev = C_prev, cell.multiplier*C_curr
+
       if i == 2*layers//3:
         C_to_auxiliary = C_prev
 
@@ -144,13 +147,16 @@ class NetworkCIFAR(nn.Module):
     self.classifier = nn.Linear(C_prev, num_classes)
 
   def forward(self, input):
+
     logits_aux = None
     s0 = s1 = self.stem(input)
+
     for i, cell in enumerate(self.cells):
       s0, s1 = s1, cell(s0, s1, self.drop_path_prob)
       if i == 2*self._layers//3:
         if self._auxiliary and self.training:
           logits_aux = self.auxiliary_head(s1)
+          
     out = self.global_pooling(s1)
     logits = self.classifier(out.view(out.size(0),-1))
     return logits, logits_aux

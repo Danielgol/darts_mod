@@ -76,6 +76,8 @@ def main():
   logging.info("args = %s", args)
 
   genotype = eval("genotypes.%s" % args.arch)
+
+  # Monta o modelo
   model = Network(args.init_channels, CIFAR_CLASSES, args.layers, args.auxiliary, genotype)
   model = model.cuda()
 
@@ -84,36 +86,43 @@ def main():
   criterion = nn.CrossEntropyLoss()
   criterion = criterion.cuda()
 
+  # Otimizador
   optimizer = torch.optim.SGD(
       model.parameters(),
       args.learning_rate,
       momentum=args.momentum,
       weight_decay=args.weight_decay)
 
-  train_transform, valid_transform = utils._data_transforms_cifar10(args)
-  train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)
-  valid_data = dset.CIFAR10(root=args.data, train=False, download=True, transform=valid_transform)
+  train_transform, valid_transform = utils._data_transforms_cifar10(args) # Transformadores dos dados para formato Torch
+  train_data = dset.CIFAR10(root=args.data, train=True, download=True, transform=train_transform)  # Dataset
+  valid_data = dset.CIFAR10(root=args.data, train=False, download=True, transform=valid_transform) # Dataset
 
+  # Train_set com Batch
   train_queue = torch.utils.data.DataLoader(
       train_data, batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=2)
 
+  # ???
   valid_queue = torch.utils.data.DataLoader(
       valid_data, batch_size=args.batch_size, shuffle=False, pin_memory=True, num_workers=2)
 
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs))
 
+  # Inicia as épocas
   for epoch in range(args.epochs):
     
     scheduler.step()
     logging.info('epoch %d lr %e', epoch, scheduler.get_lr()[0])
     model.drop_path_prob = args.drop_path_prob * epoch / args.epochs
 
+    # Train
     train_acc, train_obj = train(train_queue, model, criterion, optimizer)
     logging.info('train_acc %f', train_acc)
 
+    # ???
     valid_acc, valid_obj = infer(valid_queue, model, criterion)
     logging.info('valid_acc %f', valid_acc)
 
+    # Salva os pesos do modelo
     utils.save(model, os.path.join(args.save, 'weights.pt'))
 
 
@@ -124,22 +133,28 @@ def train(train_queue, model, criterion, optimizer):
   top5 = utils.AvgrageMeter()
   model.train()
 
+  # Treina o dataset no modelo (cada input é uma imagem)
   for step, (input, target) in enumerate(train_queue):
     input = input.cuda()
     target = target.cuda(non_blocking=True)
 
     optimizer.zero_grad()
-    logits, logits_aux = model(input)
-    loss = criterion(logits, target)
+
+    # Treina o modelo com a imagem
+    logits, logits_aux = model(input) # devolve o resultado
+    loss = criterion(logits, target) # calcula o erro
+
     if args.auxiliary:
       loss_aux = criterion(logits_aux, target)
       loss += args.auxiliary_weight*loss_aux
+
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
     prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
     n = input.size(0)
+
     objs.update(loss.item(), n)
     top1.update(prec1.item(), n)
     top5.update(prec5.item(), n)
